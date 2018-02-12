@@ -29,7 +29,7 @@ public class DiscordListener extends ListenerAdapter {
         if (event.getAuthor().isBot()) {
             return;
         }
-        String message = event.getMessage().getContentRaw();
+        String message = event.getMessage().getContentRaw().toLowerCase();
         StringBuilder response = new StringBuilder();
         switch (message) {
             case HELP:
@@ -55,6 +55,9 @@ public class DiscordListener extends ListenerAdapter {
                 break;
             default:
                 //None
+        }
+        if (response.length() == 0 && (message.contains("what") || message.contains("?")) && message.contains("supply")) {
+            fillSupply(response);
         }
         if (response.length() > 0) {
             event.getChannel().sendMessage(response).queue();
@@ -111,7 +114,7 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private void fillHelp(StringBuilder response) {
-        response.append("Commands:\n");
+        response.append("Possible commands are:\n");
         addHelpOption(response, POOLS, null);
         addHelpOption(response, EXCHANGES, null);
         addHelpOption(response, TWITTER, null);
