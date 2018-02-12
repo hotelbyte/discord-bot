@@ -1,6 +1,7 @@
 package org.hotelbyte.discordbot.config;
 
 import lombok.AllArgsConstructor;
+import org.hotelbyte.discordbot.util.Utils;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +23,7 @@ public class AppStartUpActions {
         @Override
         public void run() {
             // Any startup async action
+            Utils.ignoreSSL();
         }
 
     }
