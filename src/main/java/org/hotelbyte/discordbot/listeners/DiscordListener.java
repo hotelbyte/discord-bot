@@ -69,7 +69,7 @@ public class DiscordListener extends ListenerAdapter {
         if (currentBlock > 0) {
             long totalSupply = 11 * currentBlock;
             response.append("Total supply for now are ([the reward block 9] + [the rewards for the dev and master node 2])* [total numbers of blocks]. ");
-            response.append("**Current total supply are ").append(totalSupply).append(" HotelCoin's**. ").append("Like Ethereum do not exist an max limit.");
+            response.append("**Current total supply are ").append(totalSupply).append(" HotelCoin's aprox**. ").append("Like Ethereum do not exist an max limit.");
         } else {
             response.append("Total supply for now are ([the reward block 9] + [the rewards for the dev and master node 2])* [total numbers of blocks]. " +
                     "Like Ethereum do not exist an max limit.");
