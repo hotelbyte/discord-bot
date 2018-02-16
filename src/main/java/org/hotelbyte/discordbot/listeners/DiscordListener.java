@@ -15,7 +15,9 @@ public class DiscordListener extends ListenerAdapter {
 
     public static final String HELP = "!help";
     public static final String POOLS = "!pools";
+    public static final String POOLS_ALT = "!pool";
     public static final String EXCHANGES = "!exchanges";
+    public static final String EXCHANGES_ALT = "!exchange";
     public static final String TWITTER = "!twitter";
     public static final String WALLET = "!wallet";
     public static final String WEBSITE = "!website";
@@ -36,9 +38,11 @@ public class DiscordListener extends ListenerAdapter {
                 fillHelp(response);
                 break;
             case EXCHANGES:
+            case EXCHANGES_ALT:
                 fillExchanges(response);
                 break;
             case POOLS:
+            case POOLS_ALT:
                 fillPools(response);
                 break;
             case WEBSITE:
