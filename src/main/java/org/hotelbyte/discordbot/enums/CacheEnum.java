@@ -5,11 +5,11 @@ import lombok.Getter;
 @Getter
 public enum CacheEnum {
 
-    GENERIC,//Cache without expiration & entry limit
-    LIMITED_CACHE(-1, -1, 10),//Cache with limit of 10 elements & no expiration
-    EXAMPLE(-1, 10, -1);//Cache with expiration on 10 seconds & no entry limit
+    CRYPTO_COMPARE(-1, 500, -1),
+    STOCKS_EXCHANGE(-1, 500, -1);
 
-    public static final String EXAMPLE_CACHE = "EXAMPLE";
+    public static final String STOCKS_EXCHANGE_CACHE = "STOCKS_EXCHANGE";
+    public static final String CRYPTO_COMPARE_CACHE = "CRYPTO_COMPARE";
 
     private long readExpiration = -1;// By default without expiration
     private long writeExpiration = -1;// By default without expiration

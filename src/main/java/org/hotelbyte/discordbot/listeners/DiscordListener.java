@@ -4,15 +4,21 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.hotelbyte.discordbot.model.openminingpool.ApiStats;
+import org.hotelbyte.discordbot.model.stockexchange.ApiPrice;
+import org.hotelbyte.discordbot.service.CryptoCompareApiService;
 import org.hotelbyte.discordbot.service.OpenMiningPoolApiService;
+import org.hotelbyte.discordbot.service.StockExchangeApiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 @Component
 @Slf4j
 public class DiscordListener extends ListenerAdapter {
-
+    public static final String TOKEN_NAME = "HBF";
     public static final String HELP = "!help";
     public static final String POOLS = "!pools";
     public static final String POOLS_ALT = "!pool";
@@ -22,9 +28,15 @@ public class DiscordListener extends ListenerAdapter {
     public static final String WALLET = "!wallet";
     public static final String WEBSITE = "!website";
     public static final String SUPPLY = "!supply";
+    public static final String MASTER_NODE = "!masternodes";
+    public static final String MASTER_NODE_ALT = "!masternode";
 
     @Autowired
     private OpenMiningPoolApiService openMiningPoolApiService;
+    @Autowired
+    private StockExchangeApiService stockExchangeApiService;
+    @Autowired
+    private CryptoCompareApiService cryptoCompareApiService;
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
@@ -56,6 +68,10 @@ public class DiscordListener extends ListenerAdapter {
                 break;
             case SUPPLY:
                 fillSupply(response);
+                break;
+            case MASTER_NODE:
+            case MASTER_NODE_ALT:
+                fillMasterNode(response);
                 break;
             default:
                 //None
@@ -94,7 +110,11 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private void fillWallet(StringBuilder response) {
-        response.append("**Download it!** https://github.com/hotelbyte/distribution-hotel-interface/releases");
+        response.append("**Download it!** https://github.com/hotelbyte/distributed-hotel-interface/releases");
+    }
+
+    private void fillMasterNode(StringBuilder response) {
+        response.append("Please see our roadmap the masternodes comes on Q3/Q4 of this year, in these dates we going to show you the minimums.");
     }
 
     private void fillTwitter(StringBuilder response) {
@@ -114,17 +134,39 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private void fillExchanges(StringBuilder response) {
-        response.append("Coming Soon");
+        response.append("List of all " + TOKEN_NAME + " Exchanges:\n");
+        stocksExchange(response);
+    }
+
+    private void stocksExchange(StringBuilder response) {
+        List<ApiPrice> prices = stockExchangeApiService.getPriceByCoin(TOKEN_NAME);
+        response.append("\thttps://stocks.exchange ");
+        BigDecimal minValue = null;
+        for (ApiPrice price : prices) {
+            BigDecimal priceUSD = price.getBuy().multiply(cryptoCompareApiService.getPriceUSD(price.getPairName()));
+            if (minValue == null || priceUSD.compareTo(minValue) < 0) {
+                minValue = priceUSD;
+            }
+        }
+        if (minValue != null) {
+            response.append("$").append(minValue).append(" ");
+        }
+        for (ApiPrice price : prices) {
+            response.append("[").append(price.getPairName()).append(" MaxBuy=")
+                    .append(price.getBuy()).append(" ").append(" MinSell=").append(price.getSell()).append("]");
+        }
+        response.append("\n");
     }
 
     private void fillHelp(StringBuilder response) {
-        response.append("Possible commands are:\n");
+        response.append("Available commands:\n");
         addHelpOption(response, POOLS, null);
         addHelpOption(response, EXCHANGES, null);
         addHelpOption(response, TWITTER, null);
         addHelpOption(response, WALLET, null);
         addHelpOption(response, WEBSITE, null);
         addHelpOption(response, SUPPLY, null);
+        addHelpOption(response, MASTER_NODE, null);
     }
 
     private void addHelpOption(StringBuilder response, String command, String description) {
