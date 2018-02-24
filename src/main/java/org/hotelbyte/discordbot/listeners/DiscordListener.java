@@ -2,9 +2,7 @@ package org.hotelbyte.discordbot.listeners;
 
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.MessageBuilder;
-import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.hotelbyte.discordbot.model.openminingpool.ApiStats;
@@ -17,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Component
@@ -34,6 +33,7 @@ public class DiscordListener extends ListenerAdapter {
     public static final String SUPPLY = "!supply";
     public static final String MASTER_NODE = "!masternodes";
     public static final String MASTER_NODE_ALT = "!masternode";
+    public static final String CLEAR = "!clear";
 
     @Autowired
     private OpenMiningPoolApiService openMiningPoolApiService;
@@ -78,6 +78,9 @@ public class DiscordListener extends ListenerAdapter {
             case MASTER_NODE_ALT:
                 fillMasterNode(response);
                 break;
+            case CLEAR:
+                clear(event);
+                break;
             default:
                 //None
         }
@@ -98,6 +101,32 @@ public class DiscordListener extends ListenerAdapter {
                 event.getChannel().sendMessage(response.build()).queue();
                 return;
             }
+            event.getChannel().sendMessage(response.build()).queue();
+        }
+    }
+
+    private void clear(MessageReceivedEvent event) {
+        boolean isAdmin = false;
+        List<Role> roles = event.getGuild().getRolesByName("@official-dev", true);
+        if (roles != null && !roles.isEmpty()) {
+            Role admin = roles.get(0);
+            if (event.getMember().getRoles().contains(admin)) {
+                isAdmin = true;
+            }
+        }
+        if (isAdmin) {
+            event.getChannel().deleteMessageById(event.getMessage().getId()).queue();
+            for (Message message : event.getChannel().getIterableHistory()) {
+                if (message.getAuthor().isBot() && message.getCreationTime() != null) {
+                    OffsetDateTime creationTime = message.getCreationTime();
+                    OffsetDateTime now = OffsetDateTime.now();
+                    log.info("Message deleted: {}", message.getContentRaw());
+                    event.getChannel().deleteMessageById(message.getId()).queue();
+                }
+            }
+        } else {
+            MessageBuilder response = new MessageBuilder();
+            response.append(event.getAuthor()).append(", this command is only available for admins.");
             event.getChannel().sendMessage(response.build()).queue();
         }
     }
