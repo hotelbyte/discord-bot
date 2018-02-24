@@ -126,11 +126,14 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private void fillPools(StringBuilder response) {
-        response.append("List of all known Mining Pools:\n");
-        response.append("\thttps://hbc.openminingpool.org (Official)\n");
+        response.append("List of all known " + TOKEN_NAME + " Mining Pools:\n");
+        response.append("\thttps://hbc.openminingpool.org (Official @hotelbyte)\n");
         response.append("\thttp://hotelbyte.minerpool.net\n");
         response.append("\thttps://hbc.luckypool.io\n");
-        response.append("\thttp://comining.io");
+        response.append("\thttp://comining.io\n");
+        response.append("\thttp://hbc.cryptopool.network\n");
+        response.append("\thttps://aikapool.com/hbf/index.php\n");
+        response.append("\thttp://solo-hbc.2zo.pw\n");
     }
 
     private void fillExchanges(StringBuilder response) {
