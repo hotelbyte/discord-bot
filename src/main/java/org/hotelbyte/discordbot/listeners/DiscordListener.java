@@ -133,7 +133,7 @@ public class DiscordListener extends ListenerAdapter {
         response.append("List of all known " + TOKEN_NAME + " Mining Pools:\n");
 
         response.append("\thttps://hbc.openminingpool.org (Official ");
-        addMention(response, event, "hotelbyte-bot");
+        addMention(response, event, "hotelbyte");
         response.append(")\n");
 
         response.append("\thttp://hotelbyte.minerpool.net ");
