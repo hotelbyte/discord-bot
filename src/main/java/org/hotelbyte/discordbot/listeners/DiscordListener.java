@@ -117,7 +117,7 @@ public class DiscordListener extends ListenerAdapter {
         if (isAdmin) {
             event.getChannel().deleteMessageById(event.getMessage().getId()).queue();
             for (Message message : event.getChannel().getIterableHistory()) {
-                if (message.getAuthor().isBot() && message.getCreationTime() != null) {
+                if (!message.isPinned() && message.getAuthor().isBot() && message.getCreationTime() != null) {
                     OffsetDateTime creationTime = message.getCreationTime();
                     OffsetDateTime now = OffsetDateTime.now();
                     log.info("Message deleted: {}", message.getContentRaw());
