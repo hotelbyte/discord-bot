@@ -3,6 +3,7 @@ package org.hotelbyte.discordbot.listeners;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
@@ -46,6 +47,19 @@ public class DiscordListener extends ListenerAdapter {
         if (event.getAuthor().isBot()) {
             return;
         }
+        if (!event.getChannel().getName().equals("bot")) {
+            MessageBuilder response = new MessageBuilder();
+            List<TextChannel> channels = event.getGuild().getTextChannelsByName("bot", true);
+            response.append(event.getAuthor()).append(" please go to ");
+            if (channels != null && !channels.isEmpty()) {
+                response.append(channels.get(0));
+            } else {
+                response.append("#bot");
+            }
+            response.append(" channel to use me.");
+            event.getChannel().sendMessage(response.build()).queue();
+            return;
+        }
         String message = event.getMessage().getContentRaw().toLowerCase();
         MessageBuilder response = new MessageBuilder();
         switch (message) {
@@ -54,11 +68,11 @@ public class DiscordListener extends ListenerAdapter {
                 break;
             case EXCHANGES:
             case EXCHANGES_ALT:
-                fillExchanges(response);
+                fillExchanges(event, response);
                 break;
             case POOLS:
             case POOLS_ALT:
-                fillPools(response, event);
+                fillPools(event, response);
                 break;
             case WEBSITE:
                 fillWebsite(response);
@@ -128,7 +142,7 @@ public class DiscordListener extends ListenerAdapter {
         response.append("https://hotelbyte.org");
     }
 
-    private void fillPools(MessageBuilder response, MessageReceivedEvent event) {
+    private void fillPools(MessageReceivedEvent event, MessageBuilder response) {
 
         response.append("List of all known " + TOKEN_NAME + " Mining Pools:\n");
 
@@ -157,7 +171,7 @@ public class DiscordListener extends ListenerAdapter {
     }
 
 
-    private void fillExchanges(MessageBuilder response) {
+    private void fillExchanges(MessageReceivedEvent event, MessageBuilder response) {
         response.append("List of all " + TOKEN_NAME + " Exchanges:\n");
         stocksExchange(response);
     }
