@@ -47,19 +47,7 @@ public class DiscordListener extends ListenerAdapter {
         if (event.getAuthor().isBot()) {
             return;
         }
-        if (!event.getChannel().getName().equals("bot")) {
-            MessageBuilder response = new MessageBuilder();
-            List<TextChannel> channels = event.getGuild().getTextChannelsByName("bot", true);
-            response.append(event.getAuthor()).append(" please go to ");
-            if (channels != null && !channels.isEmpty()) {
-                response.append(channels.get(0));
-            } else {
-                response.append("#bot");
-            }
-            response.append(" channel to use me.");
-            event.getChannel().sendMessage(response.build()).queue();
-            return;
-        }
+
         String message = event.getMessage().getContentRaw().toLowerCase();
         MessageBuilder response = new MessageBuilder();
         switch (message) {
@@ -97,6 +85,19 @@ public class DiscordListener extends ListenerAdapter {
             fillSupply(response);
         }
         if (!response.isEmpty()) {
+            if (!event.getChannel().getName().equals("bot")) {
+                response = new MessageBuilder();
+                List<TextChannel> channels = event.getGuild().getTextChannelsByName("bot", true);
+                response.append(event.getAuthor()).append(" please go to ");
+                if (channels != null && !channels.isEmpty()) {
+                    response.append(channels.get(0));
+                } else {
+                    response.append("#bot");
+                }
+                response.append(" channel to use me.");
+                event.getChannel().sendMessage(response.build()).queue();
+                return;
+            }
             event.getChannel().sendMessage(response.build()).queue();
         }
     }
