@@ -1,6 +1,9 @@
 package org.hotelbyte.discordbot.listeners;
 
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.core.MessageBuilder;
+import net.dv8tion.jda.core.entities.Member;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.hotelbyte.discordbot.model.openminingpool.ApiStats;
@@ -44,7 +47,7 @@ public class DiscordListener extends ListenerAdapter {
             return;
         }
         String message = event.getMessage().getContentRaw().toLowerCase();
-        StringBuilder response = new StringBuilder();
+        MessageBuilder response = new MessageBuilder();
         switch (message) {
             case HELP:
                 fillHelp(response);
@@ -55,7 +58,7 @@ public class DiscordListener extends ListenerAdapter {
                 break;
             case POOLS:
             case POOLS_ALT:
-                fillPools(response);
+                fillPools(response, event);
                 break;
             case WEBSITE:
                 fillWebsite(response);
@@ -76,15 +79,15 @@ public class DiscordListener extends ListenerAdapter {
             default:
                 //None
         }
-        if (response.length() == 0 && (message.contains("what") || message.contains("?")) && message.contains("supply")) {
+        if (response.isEmpty() && (message.contains("what") || message.contains("?")) && message.contains("supply")) {
             fillSupply(response);
         }
-        if (response.length() > 0) {
-            event.getChannel().sendMessage(response).queue();
+        if (!response.isEmpty()) {
+            event.getChannel().sendMessage(response.build()).queue();
         }
     }
 
-    private void fillSupply(StringBuilder response) {
+    private void fillSupply(MessageBuilder response) {
         long currentBlock = currentBlock();
         if (currentBlock > 0) {
             long totalSupply = 11 * currentBlock;
@@ -109,39 +112,57 @@ public class DiscordListener extends ListenerAdapter {
         return -1;
     }
 
-    private void fillWallet(StringBuilder response) {
+    private void fillWallet(MessageBuilder response) {
         response.append("**Download it!** https://github.com/hotelbyte/distributed-hotel-interface/releases");
     }
 
-    private void fillMasterNode(StringBuilder response) {
+    private void fillMasterNode(MessageBuilder response) {
         response.append("Please see our roadmap the masternodes comes on Q3/Q4 of this year, in these dates we going to show you the minimums.");
     }
 
-    private void fillTwitter(StringBuilder response) {
+    private void fillTwitter(MessageBuilder response) {
         response.append("**Follow us!**  https://twitter.com/hotelbyte");
     }
 
-    private void fillWebsite(StringBuilder response) {
+    private void fillWebsite(MessageBuilder response) {
         response.append("https://hotelbyte.org");
     }
 
-    private void fillPools(StringBuilder response) {
+    private void fillPools(MessageBuilder response, MessageReceivedEvent event) {
+
         response.append("List of all known " + TOKEN_NAME + " Mining Pools:\n");
-        response.append("\thttps://hbc.openminingpool.org (Official @hotelbyte)\n");
-        response.append("\thttp://hotelbyte.minerpool.net\n");
-        response.append("\thttps://hbc.luckypool.io\n");
-        response.append("\thttp://comining.io\n");
-        response.append("\thttp://hbc.cryptopool.network\n");
+
+        response.append("\thttps://hbc.openminingpool.org (Official ");
+        addMention(response, event, "hotelbyte-bot");
+        response.append(")\n");
+
+        response.append("\thttp://hotelbyte.minerpool.net ");
+        addMention(response, event, "CHRlS - MINERPOOL.NET");
+        response.append("\n");
+
+        response.append("\thttps://hbc.luckypool.io ");
+        addMention(response, event, "SB155 (luckypool.io)");
+        response.append("\n");
+
+        response.append("\thttp://comining.io ");
+        addMention(response, event, "Rom1kz");
+        response.append("\n");
+
+        response.append("\thttp://hbc.cryptopool.network ");
+        addMention(response, event, "CryptoPool.Network");
+        response.append("\n");
+
         response.append("\thttps://aikapool.com/hbf/index.php\n");
         response.append("\thttp://solo-hbc.2zo.pw\n");
     }
 
-    private void fillExchanges(StringBuilder response) {
+
+    private void fillExchanges(MessageBuilder response) {
         response.append("List of all " + TOKEN_NAME + " Exchanges:\n");
         stocksExchange(response);
     }
 
-    private void stocksExchange(StringBuilder response) {
+    private void stocksExchange(MessageBuilder response) {
         List<ApiPrice> prices = stockExchangeApiService.getPriceByCoin(TOKEN_NAME);
         response.append("\thttps://stocks.exchange ");
         BigDecimal minValue = null;
@@ -161,7 +182,7 @@ public class DiscordListener extends ListenerAdapter {
         response.append("\n");
     }
 
-    private void fillHelp(StringBuilder response) {
+    private void fillHelp(MessageBuilder response) {
         response.append("Available commands:\n");
         addHelpOption(response, POOLS, null);
         addHelpOption(response, EXCHANGES, null);
@@ -172,12 +193,42 @@ public class DiscordListener extends ListenerAdapter {
         addHelpOption(response, MASTER_NODE, null);
     }
 
-    private void addHelpOption(StringBuilder response, String command, String description) {
+    private void addHelpOption(MessageBuilder response, String command, String description) {
         response.append('\t');
         response.append(command);
         if (!StringUtils.isEmpty(description)) {
             response.append(": ").append(description);
         }
         response.append('\n');
+    }
+
+
+    private static void addMention(MessageBuilder response, MessageReceivedEvent event, String username) {
+        User user = getUserByName(event, username);
+        if (user != null) {
+            response.append(user);
+        } else {
+            response.append("@").append(username);
+        }
+    }
+
+    private static User getUserByName(MessageReceivedEvent event, String name) {
+        User user = null;
+        if (event != null && event.getGuild() != null) {
+            List<Member> result = event.getGuild().getMembersByName(name, true);
+            if (result == null || result.isEmpty()) {
+                result = event.getGuild().getMembersByEffectiveName(name, true);
+                if (result == null || result.isEmpty()) {
+                    result = event.getGuild().getMembersByNickname(name, true);
+                }
+            }
+            if (result != null && !result.isEmpty()) {
+                Member member = result.get(0);
+                if (member != null && member.getUser() != null) {
+                    return member.getUser();
+                }
+            }
+        }
+        return user;
     }
 }
