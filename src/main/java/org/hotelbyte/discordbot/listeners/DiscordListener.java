@@ -86,6 +86,7 @@ public class DiscordListener extends ListenerAdapter {
         }
         if (response.isEmpty() && (message.contains("what") || message.contains("?")) && message.contains("supply")) {
             fillSupply(response);
+            event.getChannel().sendMessage(response.build()).queue();
         } else if (!response.isEmpty()) {
             if (!event.getChannel().getName().equals("bot")) {
                 response = new MessageBuilder();
