@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum CacheEnum {
 
-    CRYPTO_COMPARE(-1, 500, -1),
-    STOCKS_EXCHANGE(-1, 500, -1);
+    CRYPTO_COMPARE(-1, 3600, -1),
+    STOCKS_EXCHANGE(-1, 900, -1);
 
     public static final String STOCKS_EXCHANGE_CACHE = "STOCKS_EXCHANGE";
     public static final String CRYPTO_COMPARE_CACHE = "CRYPTO_COMPARE";
