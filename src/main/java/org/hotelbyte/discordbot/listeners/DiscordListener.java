@@ -88,7 +88,7 @@ public class DiscordListener extends ListenerAdapter {
             fillSupply(response);
             event.getChannel().sendMessage(response.build()).queue();
         } else if (!response.isEmpty()) {
-            if (!event.getChannel().getName().equals("bot")) {
+            if (!isAdmin(event) && !event.getChannel().getName().equals("bot")) {
                 response = new MessageBuilder();
                 List<TextChannel> channels = event.getGuild().getTextChannelsByName("bot", true);
                 response.append(event.getAuthor()).append(" please go to ");
@@ -99,22 +99,14 @@ public class DiscordListener extends ListenerAdapter {
                 }
                 response.append(" channel to use me.");
                 event.getChannel().sendMessage(response.build()).queue();
-                return;
+            } else {
+                event.getChannel().sendMessage(response.build()).queue();
             }
-            event.getChannel().sendMessage(response.build()).queue();
         }
     }
 
     private void clear(MessageReceivedEvent event) {
-        boolean isAdmin = false;
-        List<Role> roles = event.getGuild().getRolesByName("@official-dev", true);
-        if (roles != null && !roles.isEmpty()) {
-            Role admin = roles.get(0);
-            if (event.getMember().getRoles().contains(admin)) {
-                isAdmin = true;
-            }
-        }
-        if (isAdmin) {
+        if (isAdmin(event)) {
             event.getChannel().deleteMessageById(event.getMessage().getId()).queue();
             for (Message message : event.getChannel().getIterableHistory()) {
                 if (!message.isPinned() && message.getAuthor().isBot() && message.getCreationTime() != null) {
@@ -130,6 +122,7 @@ public class DiscordListener extends ListenerAdapter {
             event.getChannel().sendMessage(response.build()).queue();
         }
     }
+
 
     private void fillSupply(MessageBuilder response) {
         long currentBlock = currentBlock();
@@ -207,21 +200,28 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private void stocksExchange(MessageBuilder response) {
-        List<ApiPrice> prices = stockExchangeApiService.getPriceByCoin(TOKEN_NAME);
         response.append("\thttps://stocks.exchange ");
-        BigDecimal minValue = null;
-        for (ApiPrice price : prices) {
-            BigDecimal priceUSD = price.getBuy().multiply(cryptoCompareApiService.getPriceUSD(price.getPairName()));
-            if (minValue == null || priceUSD.compareTo(minValue) < 0) {
-                minValue = priceUSD;
+        try {
+            StringBuilder priceString = new StringBuilder();
+            List<ApiPrice> prices = stockExchangeApiService.getPriceByCoin(TOKEN_NAME);
+            BigDecimal minValue = null;
+            for (ApiPrice price : prices) {
+                BigDecimal priceUSD = price.getBuy().multiply(cryptoCompareApiService.getPriceUSD(price.getPairName()));
+                if (minValue == null || priceUSD.compareTo(minValue) < 0) {
+                    minValue = priceUSD;
+                }
             }
-        }
-        if (minValue != null) {
-            response.append("$").append(minValue).append(" ");
-        }
-        for (ApiPrice price : prices) {
-            response.append("[").append(price.getPairName()).append(" MaxBuy=")
-                    .append(price.getBuy()).append(" ").append(" MinSell=").append(price.getSell()).append("]");
+            if (minValue != null) {
+                priceString.append("$").append(minValue).append(" ");
+            }
+            for (ApiPrice price : prices) {
+                priceString.append("[").append(price.getPairName()).append(" MaxBuy=")
+                        .append(price.getBuy()).append(" ").append(" MinSell=").append(price.getSell()).append("]");
+            }
+            response.append(priceString);
+        } catch (Exception e) {
+            log.error("Error when retrieve stocksExchangePrice", e);
+            response.append("$?,?? Something is wrong");
         }
         response.append("\n");
     }
@@ -246,6 +246,21 @@ public class DiscordListener extends ListenerAdapter {
         response.append('\n');
     }
 
+    /*
+     * DISCORD UTILS
+     */
+
+    private static boolean isAdmin(MessageReceivedEvent event) {
+        boolean isAdmin = false;
+        List<Role> roles = event.getGuild().getRolesByName("@official-dev", true);
+        if (roles != null && !roles.isEmpty()) {
+            Role admin = roles.get(0);
+            if (event.getMember().getRoles().contains(admin)) {
+                isAdmin = true;
+            }
+        }
+        return isAdmin;
+    }
 
     private static void addMention(MessageBuilder response, MessageReceivedEvent event, String username) {
         User user = getUserByName(event, username);
