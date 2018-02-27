@@ -1,5 +1,6 @@
 package org.hotelbyte.discordbot.model.openminingpool;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -7,7 +8,8 @@ import java.util.List;
 @Data
 public class ApiStats {
     private Long candidatesTotal;
-    private Long hashrate;
+    @JsonProperty("hashrate")
+    private Long hashRate;
     private Long immatureTotal;
     private Long maturedTotal;
     private Long minersTotal;

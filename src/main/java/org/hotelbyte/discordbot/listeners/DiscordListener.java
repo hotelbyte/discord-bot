@@ -5,18 +5,24 @@ import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import org.hotelbyte.discordbot.model.PoolInfo;
 import org.hotelbyte.discordbot.model.openminingpool.ApiStats;
 import org.hotelbyte.discordbot.model.stockexchange.ApiPrice;
 import org.hotelbyte.discordbot.service.CryptoCompareApiService;
-import org.hotelbyte.discordbot.service.OpenMiningPoolApiService;
+import org.hotelbyte.discordbot.service.OpenEthereumPoolApiService;
 import org.hotelbyte.discordbot.service.StockExchangeApiService;
+import org.hotelbyte.discordbot.util.PoolUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static org.hotelbyte.discordbot.service.OpenEthereumPoolApiService.*;
 
 @Component
 @Slf4j
@@ -36,7 +42,7 @@ public class DiscordListener extends ListenerAdapter {
     public static final String CLEAR = "!clear";
 
     @Autowired
-    private OpenMiningPoolApiService openMiningPoolApiService;
+    private OpenEthereumPoolApiService openMiningPoolApiService;
     @Autowired
     private StockExchangeApiService stockExchangeApiService;
     @Autowired
@@ -138,7 +144,7 @@ public class DiscordListener extends ListenerAdapter {
 
     private long currentBlock() {
         try {
-            ApiStats stats = openMiningPoolApiService.getStats();
+            ApiStats stats = openMiningPoolApiService.getPoolStats(OFFICIAL);
             if (stats != null && stats.getNodes() != null && !stats.getNodes().isEmpty()) {
                 String height = stats.getNodes().get(0).getHeight();
                 return Long.parseLong(height);
@@ -168,29 +174,43 @@ public class DiscordListener extends ListenerAdapter {
     private void fillPools(MessageReceivedEvent event, MessageBuilder response) {
 
         response.append("List of all known " + TOKEN_NAME + " Mining Pools:\n");
-
-        response.append("\thttps://hbc.openminingpool.org (Official ");
-        addMention(response, event, "hotelbyte");
-        response.append(")\n");
-
-        response.append("\thttp://hotelbyte.minerpool.net ");
-        addMention(response, event, "CHRlS - MINERPOOL.NET");
-        response.append("\n");
-
-        response.append("\thttps://hbc.luckypool.io ");
-        addMention(response, event, "SB155 (luckypool.io)");
-        response.append("\n");
-
-        response.append("\thttp://comining.io ");
-        addMention(response, event, "Rom1kz");
-        response.append("\n");
-
-        response.append("\thttp://hbc.cryptopool.network ");
-        addMention(response, event, "CryptoPool.Network");
-        response.append("\n");
-
-        response.append("\thttps://aikapool.com/hbf/index.php\n");
-        response.append("\thttp://solo-hbc.2zo.pw\n");
+        List<PoolInfo> pools = new ArrayList<>();
+        pools.add(new PoolInfo("https://hbc.openminingpool.org **OFFICIAL**", openMiningPoolApiService.getPoolStats(OFFICIAL), "hotelbyte"));
+        pools.add(new PoolInfo("http://hotelbyte.minerpool.net", openMiningPoolApiService.getPoolStats(MINER_POOL), "CHRlS - MINERPOOL.NET"));
+        pools.add(new PoolInfo("https://hbc.luckypool.io", openMiningPoolApiService.getPoolStats(LUCKY_POOL), "SB155 (luckypool.io)"));
+        pools.add(new PoolInfo("http://comining.io", new ApiStats(), "Rom1kz"));
+        pools.add(new PoolInfo("http://hbc.cryptopool.network", openMiningPoolApiService.getPoolStats(CRYPTO_POOL), "CryptoPool.Network"));
+        pools.add(new PoolInfo("https://aikapool.com/hbf/index.php", new ApiStats(), null));
+        pools.add(new PoolInfo("http://solo-hbc.2zo.pw", openMiningPoolApiService.getPoolStats(TWOZO_PW), null));
+        Collections.sort(pools, (o1, o2) -> {
+            ApiStats stats1 = o1.getStats();
+            ApiStats stats2 = o2.getStats();
+            int result = 0;
+            if (stats1.getHashRate() != null && stats2.getHashRate() == null) {
+                result = -1;
+            } else if (stats1.getHashRate() == null && stats2.getHashRate() != null) {
+                result = 1;
+            } else if (stats1.getHashRate() != null && stats2.getHashRate() != null) {
+                result = stats1.getHashRate() > stats2.getHashRate() ? -1 : 1;
+            }
+            return result;
+        });
+        long totalHashRate = 0;
+        for (PoolInfo poolInfo : pools) {
+            response.append("\t");
+            if (poolInfo.getStats() != null && poolInfo.getStats().getHashRate() != null) {
+                response.append("**").append(PoolUtils.getHashRate(poolInfo.getStats().getHashRate())).append("** ");
+                totalHashRate += poolInfo.getStats().getHashRate();
+            } else {
+                response.append("**???.?? H/s** ");
+            }
+            response.append(poolInfo.getDescription()).append(" ");
+            if (poolInfo.getDiscordUser() != null) {
+                addMention(response, event, poolInfo.getDiscordUser());
+            }
+            response.append("\n");
+        }
+        response.append("Total network hash rate are **").append(PoolUtils.getHashRate(totalHashRate)).append("**");
     }
 
 

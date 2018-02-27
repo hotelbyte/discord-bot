@@ -17,7 +17,7 @@ public class CryptoCompareApiService {
     @Autowired
     private RestTemplate rest;
 
-    @Cacheable(value = CacheEnum.CRYPTO_COMPARE_CACHE)
+    @Cacheable(value = CacheEnum.CRYPTO_COMPARE_CACHE, unless = "#result == null ")
     public BigDecimal getPriceUSD(String currency) {
         log.info("Calling cryptocompare for {}...", currency);
         String response = rest.getForObject("https://min-api.cryptocompare.com/data/pricehistorical?fsym=" +
