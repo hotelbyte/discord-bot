@@ -202,23 +202,25 @@ public class DiscordListener extends ListenerAdapter {
     private void stocksExchange(MessageBuilder response) {
         response.append("\thttps://stocks.exchange ");
         try {
-            StringBuilder priceString = new StringBuilder();
             List<ApiPrice> prices = stockExchangeApiService.getPriceByCoin(TOKEN_NAME);
-            BigDecimal minValue = null;
-            for (ApiPrice price : prices) {
-                BigDecimal priceUSD = price.getBuy().multiply(cryptoCompareApiService.getPriceUSD(price.getPairName()));
-                if (minValue == null || priceUSD.compareTo(minValue) < 0) {
-                    minValue = priceUSD;
+            if (prices != null) {
+                StringBuilder priceString = new StringBuilder();
+                BigDecimal minValue = null;
+                for (ApiPrice price : prices) {
+                    BigDecimal priceUSD = price.getBuy().multiply(cryptoCompareApiService.getPriceUSD(price.getPairName()));
+                    if (minValue == null || priceUSD.compareTo(minValue) < 0) {
+                        minValue = priceUSD;
+                    }
                 }
+                if (minValue != null) {
+                    priceString.append("$").append(minValue).append(" ");
+                }
+                for (ApiPrice price : prices) {
+                    priceString.append("[").append(price.getPairName()).append(" MaxBuy=")
+                            .append(price.getBuy()).append(" ").append(" MinSell=").append(price.getSell()).append("]");
+                }
+                response.append(priceString);
             }
-            if (minValue != null) {
-                priceString.append("$").append(minValue).append(" ");
-            }
-            for (ApiPrice price : prices) {
-                priceString.append("[").append(price.getPairName()).append(" MaxBuy=")
-                        .append(price.getBuy()).append(" ").append(" MinSell=").append(price.getSell()).append("]");
-            }
-            response.append(priceString);
         } catch (Exception e) {
             log.error("Error when retrieve stocksExchangePrice", e);
             response.append("$?,?? Something is wrong");
