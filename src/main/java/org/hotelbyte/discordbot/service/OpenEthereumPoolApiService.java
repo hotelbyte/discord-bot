@@ -22,7 +22,7 @@ public class OpenEthereumPoolApiService {
     @Autowired
     private RestTemplate rest;
 
-    @Cacheable(value = OPEN_ETHEREUM_POOL_CACHE, unless = "#result == null")
+    @Cacheable(value = OPEN_ETHEREUM_POOL_CACHE, unless = "#result == null || #result.getHashRate() == null")
     public ApiStats getPoolStats(String url) {
         try {
             return rest.getForObject(url + "/api/stats", ApiStats.class);

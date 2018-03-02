@@ -10,6 +10,7 @@ import org.hotelbyte.discordbot.model.openminingpool.ApiStats;
 import org.hotelbyte.discordbot.model.stockexchange.ApiPrice;
 import org.hotelbyte.discordbot.service.CryptoCompareApiService;
 import org.hotelbyte.discordbot.service.OpenEthereumPoolApiService;
+import org.hotelbyte.discordbot.service.ScrapService;
 import org.hotelbyte.discordbot.service.StockExchangeApiService;
 import org.hotelbyte.discordbot.util.PoolUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,8 @@ public class DiscordListener extends ListenerAdapter {
     private StockExchangeApiService stockExchangeApiService;
     @Autowired
     private CryptoCompareApiService cryptoCompareApiService;
+    @Autowired
+    private ScrapService scrapService;
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
@@ -178,9 +181,9 @@ public class DiscordListener extends ListenerAdapter {
         pools.add(new PoolInfo("https://hbc.openminingpool.org **OFFICIAL**", openMiningPoolApiService.getPoolStats(OFFICIAL), "hotelbyte"));
         pools.add(new PoolInfo("http://hotelbyte.minerpool.net", openMiningPoolApiService.getPoolStats(MINER_POOL), "CHRlS - MINERPOOL.NET"));
         pools.add(new PoolInfo("https://hbc.luckypool.io", openMiningPoolApiService.getPoolStats(LUCKY_POOL), "SB155 (luckypool.io)"));
-        pools.add(new PoolInfo("http://comining.io", new ApiStats(), "Rom1kz"));
+        pools.add(new PoolInfo("http://comining.io", scrapService.getCominingIoPoolStats(), "Rom1kz"));
         pools.add(new PoolInfo("http://hbc.cryptopool.network", openMiningPoolApiService.getPoolStats(CRYPTO_POOL), "CryptoPool.Network"));
-        pools.add(new PoolInfo("https://aikapool.com/hbf/index.php", new ApiStats(), null));
+        pools.add(new PoolInfo("https://aikapool.com/hbf/index.php", scrapService.getAikaPoolStats(), null));
         pools.add(new PoolInfo("http://solo-hbc.2zo.pw", openMiningPoolApiService.getPoolStats(TWOZO_PW), null));
         Collections.sort(pools, (o1, o2) -> {
             ApiStats stats1 = o1.getStats();

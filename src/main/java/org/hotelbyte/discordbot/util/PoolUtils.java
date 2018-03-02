@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public class PoolUtils {
     private static final String[] HASH_UNIT = {"H", "KH", "MH", "GH", "TH", "EH", "ZH", "YH"};
-    private static final BigDecimal KILO_BIT = BigDecimal.valueOf(1000);
+    public static final BigDecimal KILO_BIT = BigDecimal.valueOf(1000);
 
     public static String getHashRate(Long statsHashRate) {
         int unitIndex = 0;
