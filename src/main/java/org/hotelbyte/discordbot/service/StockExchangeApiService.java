@@ -40,8 +40,8 @@ public class StockExchangeApiService {
         return (List<ApiPrice>) cache.asMap().get(coinName);
     }
 
-    public List<ApiPrice> updatePriceByCoin(String coinName) {
-        log.info("Calling stocks.exchange for {}...", coinName);
+    private List<ApiPrice> updatePriceByCoin(String coinName) {
+        log.debug("Calling stocks.exchange for {}...", coinName);
         ApiPrice[] prices = rest.getForObject("https://stocks.exchange/api2/prices", ApiPrice[].class);
         return Arrays.stream(prices).filter(Objects::nonNull).filter(price -> price.getMarket_name() != null).map(price -> {
             String[] split = price.getMarket_name().split("_");

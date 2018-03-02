@@ -226,7 +226,7 @@ public class DiscordListener extends ListenerAdapter {
             }
             response.append("\n");
         }
-        response.append("Total network hash rate are **").append(PoolUtils.getHashRate(totalHashRate)).append("**");
+        response.append("Total pools hash rate are **").append(PoolUtils.getHashRate(totalHashRate)).append("**");
     }
 
     private static Callable<PoolInfo> poolInfoCallable(String description, Supplier<ApiStats> poolStats, String discordUser) {
