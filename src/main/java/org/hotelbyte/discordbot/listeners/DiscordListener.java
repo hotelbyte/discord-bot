@@ -22,6 +22,11 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 import static org.hotelbyte.discordbot.service.OpenEthereumPoolApiService.*;
 
@@ -50,6 +55,7 @@ public class DiscordListener extends ListenerAdapter {
     private CryptoCompareApiService cryptoCompareApiService;
     @Autowired
     private ScrapService scrapService;
+    private ExecutorService executor = Executors.newFixedThreadPool(100);
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
@@ -175,16 +181,23 @@ public class DiscordListener extends ListenerAdapter {
     }
 
     private void fillPools(MessageReceivedEvent event, MessageBuilder response) {
-
         response.append("List of all known " + TOKEN_NAME + " Mining Pools:\n");
+        List<Future<PoolInfo>> futures = new ArrayList<>();
+        futures.add(executor.submit(poolInfoCallable("https://hbc.openminingpool.org **OFFICIAL**", () -> openMiningPoolApiService.getPoolStats(OFFICIAL), "hotelbyte")));
+        futures.add(executor.submit(poolInfoCallable("http://hotelbyte.minerpool.net", () -> openMiningPoolApiService.getPoolStats(MINER_POOL), "CHRlS - MINERPOOL.NET")));
+        futures.add(executor.submit(poolInfoCallable("https://hbc.luckypool.io", () -> openMiningPoolApiService.getPoolStats(LUCKY_POOL), "SB155 (luckypool.io)")));
+        futures.add(executor.submit(poolInfoCallable("http://comining.io", () -> scrapService.getCominingIoPoolStats(), "Rom1kz")));
+        futures.add(executor.submit(poolInfoCallable("http://hbc.cryptopool.network", () -> openMiningPoolApiService.getPoolStats(CRYPTO_POOL), "CryptoPool.Network")));
+        futures.add(executor.submit(poolInfoCallable("https://aikapool.com/hbf/index.php", () -> scrapService.getAikaPoolStats(), null)));
+        futures.add(executor.submit(poolInfoCallable("http://solo-hbc.2zo.pw", () -> openMiningPoolApiService.getPoolStats(TWOZO_PW), null)));
         List<PoolInfo> pools = new ArrayList<>();
-        pools.add(new PoolInfo("https://hbc.openminingpool.org **OFFICIAL**", openMiningPoolApiService.getPoolStats(OFFICIAL), "hotelbyte"));
-        pools.add(new PoolInfo("http://hotelbyte.minerpool.net", openMiningPoolApiService.getPoolStats(MINER_POOL), "CHRlS - MINERPOOL.NET"));
-        pools.add(new PoolInfo("https://hbc.luckypool.io", openMiningPoolApiService.getPoolStats(LUCKY_POOL), "SB155 (luckypool.io)"));
-        pools.add(new PoolInfo("http://comining.io", scrapService.getCominingIoPoolStats(), "Rom1kz"));
-        pools.add(new PoolInfo("http://hbc.cryptopool.network", openMiningPoolApiService.getPoolStats(CRYPTO_POOL), "CryptoPool.Network"));
-        pools.add(new PoolInfo("https://aikapool.com/hbf/index.php", scrapService.getAikaPoolStats(), null));
-        pools.add(new PoolInfo("http://solo-hbc.2zo.pw", openMiningPoolApiService.getPoolStats(TWOZO_PW), null));
+        for (Future<PoolInfo> future : futures) {
+            try {
+                pools.add(future.get());
+            } catch (Exception e) {
+                log.error("Error getting future", e);
+            }
+        }
         Collections.sort(pools, (o1, o2) -> {
             ApiStats stats1 = o1.getStats();
             ApiStats stats2 = o2.getStats();
@@ -214,6 +227,10 @@ public class DiscordListener extends ListenerAdapter {
             response.append("\n");
         }
         response.append("Total network hash rate are **").append(PoolUtils.getHashRate(totalHashRate)).append("**");
+    }
+
+    private static Callable<PoolInfo> poolInfoCallable(String description, Supplier<ApiStats> poolStats, String discordUser) {
+        return () -> new PoolInfo(description, poolStats.get(), discordUser);
     }
 
 

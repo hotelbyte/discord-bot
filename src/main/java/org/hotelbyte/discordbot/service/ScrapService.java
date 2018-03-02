@@ -41,7 +41,7 @@ public class ScrapService {
                             found = true;
                         } else if (found) {
                             if (index == 4 || index == 5 || index == 6) {
-                                log.info("Found: {}", value);
+                                log.debug("Found: {}", value);
                                 int pointIndex = value.indexOf('.');
                                 if (pointIndex > 0 && pointIndex + 4 < value.length()) {
                                     BigDecimal amount = new BigDecimal(value.substring(0, pointIndex + 3));
