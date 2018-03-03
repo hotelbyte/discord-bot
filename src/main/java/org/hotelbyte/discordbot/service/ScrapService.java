@@ -78,7 +78,7 @@ public class ScrapService {
             String searchUrl = "https://aikapool.com/hbf/index.php?page=statistics&action=pool";
             HtmlPage page = client.getPage(searchUrl);
             HtmlElement element = (HtmlElement) page.getElementById("b-hashrate");
-            BigDecimal amount = new BigDecimal(((DomText) element.getFirstChild()).getData());
+            BigDecimal amount = new BigDecimal(((DomText) element.getFirstChild()).getData().replaceAll(",", ""));
             String unit = ((DomText) element.getNextSibling()).getData().substring(1, 2);
             hashRate = getHashRate(amount, unit);
             log.debug("Total hashRate for HBF are {}", hashRate);
