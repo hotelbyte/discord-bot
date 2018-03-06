@@ -2,6 +2,7 @@ package org.hotelbyte.discordbot.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -37,11 +38,12 @@ public class Utils {
         };
         try {
             ctx = SSLContext.getInstance("SSL");
-            ctx.init(null, trustAllCerts, null);
+            ctx.init(null, trustAllCerts, new java.security.SecureRandom());
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             log.info("Error loading ssl context ", e);
         }
         SSLContext.setDefault(ctx);
+        HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
     }
 
     public static String readFile(ClassLoader classLoader, String filePath) {
