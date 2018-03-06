@@ -16,8 +16,8 @@ public class OpenEthereumPoolApiService {
     public static final String OFFICIAL = "https://api.openminingpool.org";
     public static final String MINER_POOL = "http://hotelbyte.minerpool.net";
     public static final String LUCKY_POOL = "https://hbc.luckypool.io/api";
-    public static final String CRYPTO_POOL = "http://hbc.cryptopool.network";
-    public static final String TWOZO_PW = "http://solo-hbc.2zo.pw";
+    public static final String CRYPTO_POOL = "https://hbc.cryptopool.network";
+    public static final String TWOZO_PW = "https://hbf.2zo.pw";
 
     @Autowired
     private RestTemplate rest;
@@ -27,7 +27,7 @@ public class OpenEthereumPoolApiService {
         try {
             return rest.getForObject(url + "/api/stats", ApiStats.class);
         } catch (HttpClientErrorException e) {
-            log.error("Error obtaining priceByCoin: {}", e.getMessage());
+            log.error("Error obtaining hashRate for {}: {}", url, e.getMessage(), e);
             return new ApiStats();
         }
     }

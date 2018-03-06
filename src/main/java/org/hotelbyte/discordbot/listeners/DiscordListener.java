@@ -186,12 +186,12 @@ public class DiscordListener extends ListenerAdapter {
         callables.add(new PoolInfoCallable("http://hotelbyte.minerpool.net", () -> openMiningPoolApiService.getPoolStats(MINER_POOL), "CHRlS - MINERPOOL.NET"));
         callables.add(new PoolInfoCallable("https://hbc.luckypool.io", () -> openMiningPoolApiService.getPoolStats(LUCKY_POOL), "SB155 (luckypool.io)"));
         callables.add(new PoolInfoCallable("http://comining.io", () -> scrapService.getCominingIoPoolStats(), "Rom1kz"));
-        callables.add(new PoolInfoCallable("http://hbc.cryptopool.network", () -> openMiningPoolApiService.getPoolStats(CRYPTO_POOL), "CryptoPool.Network"));
+        callables.add(new PoolInfoCallable("https://hbc.cryptopool.network", () -> openMiningPoolApiService.getPoolStats(CRYPTO_POOL), "CryptoPool.Network"));
         callables.add(new PoolInfoCallable("https://aikapool.com/hbf/index.php", () -> scrapService.getAikaPoolStats(), null));
-        callables.add(new PoolInfoCallable("http://solo-hbc.2zo.pw", () -> openMiningPoolApiService.getPoolStats(TWOZO_PW), null));
+        callables.add(new PoolInfoCallable("https://hbf.2zo.pw", () -> openMiningPoolApiService.getPoolStats(TWOZO_PW), null));
         List<Future<PoolInfo>> futures = new ArrayList<>();
         try {
-            futures = executor.invokeAll(callables, 1500, TimeUnit.MILLISECONDS);
+            futures = executor.invokeAll(callables, 3000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             log.error("Interrupted exceptions", e);
         }
@@ -250,7 +250,17 @@ public class DiscordListener extends ListenerAdapter {
 
         @Override
         public PoolInfo call() throws Exception {
-            return new PoolInfo(description, poolStats.get(), discordUser);
+            long startTime = System.currentTimeMillis();
+            try {
+                return new PoolInfo(description, poolStats.get(), discordUser);
+            } catch (Exception e) {
+                if ((System.currentTimeMillis() - startTime) < 1500) {
+                    log.warn("Error before retry:{}", e.getMessage());
+                    return new PoolInfo(description, poolStats.get(), discordUser);
+                } else {
+                    throw e;
+                }
+            }
         }
 
         public PoolInfo getPoolInfoWithoutStats() {
