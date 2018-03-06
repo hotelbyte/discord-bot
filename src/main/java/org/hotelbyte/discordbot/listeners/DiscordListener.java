@@ -206,7 +206,7 @@ public class DiscordListener extends ListenerAdapter {
                     pools.add(future.get());
                 }
             } catch (Exception e) {
-                log.error("Error getting future", e);
+                log.error("Error getting future", e.getMessage());
                 pools.add(callables.get(i).getPoolInfoWithoutStats());
             }
         }
@@ -249,18 +249,8 @@ public class DiscordListener extends ListenerAdapter {
         private final String discordUser;
 
         @Override
-        public PoolInfo call() throws Exception {
-            long startTime = System.currentTimeMillis();
-            try {
-                return new PoolInfo(description, poolStats.get(), discordUser);
-            } catch (Exception e) {
-                if ((System.currentTimeMillis() - startTime) < 1500) {
-                    log.warn("Error before retry:{}", e.getMessage());
-                    return new PoolInfo(description, poolStats.get(), discordUser);
-                } else {
-                    throw e;
-                }
-            }
+        public PoolInfo call() {
+            return new PoolInfo(description, poolStats.get(), discordUser);
         }
 
         public PoolInfo getPoolInfoWithoutStats() {

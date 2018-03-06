@@ -1,6 +1,5 @@
 package org.hotelbyte.discordbot.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.hotelbyte.discordbot.model.openminingpool.ApiStats;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +7,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -25,19 +26,13 @@ public class OpenEthereumPoolApiService {
 
     @Autowired
     private RestTemplate rest;
-    @Autowired
-    private ObjectMapper mapper;
 
     @Cacheable(value = OPEN_ETHEREUM_POOL_CACHE, unless = "#result == null || #result.getHashRate() == null")
+    @Retryable(value = {HttpClientErrorException.class}, backoff = @Backoff(delay = 100))
     public ApiStats getPoolStats(String url) {
-        try {
-            final HttpHeaders headers = new HttpHeaders();
-            headers.set("User-Agent", "Mozilla/5.0 Firefox/26.0");
-            return rest.exchange(url + "/api/stats", HttpMethod.GET, new HttpEntity<String>(headers), ApiStats.class).getBody();
-        } catch (HttpClientErrorException e) {
-            log.error("Error obtaining hashRate for {}: {} -> {}", url, e.getMessage(), e.getResponseBodyAsString());
-        }
-        return new ApiStats();
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "Mozilla/5.0 Firefox/26.0");
+        return rest.exchange(url + "/api/stats", HttpMethod.GET, new HttpEntity<String>(headers), ApiStats.class).getBody();
     }
 
 

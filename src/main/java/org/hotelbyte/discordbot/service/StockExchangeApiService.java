@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.guava.GuavaCache;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -28,6 +30,7 @@ public class StockExchangeApiService {
     private CacheManager cacheManager;
 
     @Cacheable(value = STOCKS_EXCHANGE_NEAR_CACHE, unless = "#result == null || #result.isEmpty()")
+    @Retryable(value = {HttpClientErrorException.class}, backoff = @Backoff(delay = 1000))
     public List<ApiPrice> getPriceByCoin(String coinName) {
         GuavaCache guavaCache = (GuavaCache) cacheManager.getCache(STOCKS_EXCHANGE_CACHE);
         Cache<Object, Object> cache = guavaCache.getNativeCache();
