@@ -329,7 +329,7 @@ public class DiscordListener extends ListenerAdapter {
 
     private static boolean isAdmin(MessageReceivedEvent event) {
         boolean isAdmin = false;
-        List<Role> roles = event.getGuild().getRolesByName("@official-dev", true);
+        List<Role> roles = event.getGuild().getRolesByName("@official-team", true);
         if (roles != null && !roles.isEmpty()) {
             Role admin = roles.get(0);
             if (event.getMember().getRoles().contains(admin)) {
