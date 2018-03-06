@@ -61,7 +61,6 @@ public class DiscordListener extends ListenerAdapter {
         if (event.getAuthor().isBot()) {
             return;
         }
-
         String message = event.getMessage().getContentRaw().toLowerCase();
         MessageBuilder response = new MessageBuilder();
         switch (message) {
@@ -112,7 +111,10 @@ public class DiscordListener extends ListenerAdapter {
                     response.append("#bot");
                 }
                 response.append(" channel to use me.");
-                event.getChannel().sendMessage(response.build()).queue();
+                event.getChannel().sendMessage(response.build()).queue(msg -> {
+                    event.getMessage().delete().queueAfter(30, TimeUnit.SECONDS);
+                    msg.delete().queueAfter(30, TimeUnit.SECONDS);
+                });
             } else {
                 event.getChannel().sendMessage(response.build()).queue();
             }
